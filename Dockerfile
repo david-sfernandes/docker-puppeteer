@@ -1,31 +1,57 @@
 FROM node:22.14.0-slim
 
-ENV \
-    LANG=pt_BR.UTF-8 \
-    PPTRUSER_UID=10042
+# Instala dependências do Chromium e Google Chrome
+RUN apt-get update && apt-get install -y \
+    wget \
+    ca-certificates \
+    gnupg \
+    fonts-liberation \
+    libappindicator3-1 \
+    libasound2 \
+    libatk-bridge2.0-0 \
+    libatk1.0-0 \
+    libcups2 \
+    libdbus-1-3 \
+    libdrm2 \
+    libgbm1 \
+    libgtk-3-0 \
+    libnspr4 \
+    libnss3 \
+    libx11-xcb1 \
+    libxcomposite1 \
+    libxcursor1 \
+    libxdamage1 \
+    libxfixes3 \
+    libxi6 \
+    libxrandr2 \
+    libxrender1 \
+    libxss1 \
+    libxtst6 \
+    xdg-utils \
+    && rm -rf /var/lib/apt/lists/*
 
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends fonts-ipafont-gothic fonts-wqy-zenhei fonts-thai-tlwg fonts-khmeros \
-    fonts-kacst fonts-freefont-ttf dbus dbus-x11
+# Instala Google Chrome
+RUN wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | apt-key add - \
+    && sh -c 'echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google-chrome.list' \
+    && apt-get update \
+    && apt-get install -y google-chrome-stable \
+    && rm -rf /var/lib/apt/lists/*
 
-RUN groupadd -r pptruser && useradd -u $PPTRUSER_UID -rm -g pptruser -G audio,video pptruser
+# Define diretório de trabalho
+WORKDIR /app
 
-USER $PPTRUSER_UID
+# Copia os arquivos do projeto
+COPY package*.json ./
+RUN npm install
 
-WORKDIR /home/pptruser
+COPY . .
 
-COPY puppeteer-browsers-latest.tgz pupperteer-latest.tgz puppeteer-core-latest.tgz ./
+# Instala dependências específicas do Puppeteer
+RUN npm install puppeteer
 
-ENV DBUS_SESSION_BUS_ADDRESS autolauch:
+# Define variável de ambiente para Puppeteer
+ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
+ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/google-chrome-stable
 
-RUN npm i ./puppeteer-browsers-latest.tgz ./puppeteer-core-latest.tgz ./puppeteer-latest.tgz \
-    ./puppeteer-browsers-latest.tgz ./puppeteer-core-latest.tgz ./puppeteer-latest.tgz
-
-USER root
-
-RUN PUPPETEER_CACHE_DIR=/home/pptruser/.cache/puppeteer \
-    npx puppeteer browsers install chrome --install-dependências
-
-USER $PPTRUSER_UID
-
-RUN node -e "require('child_process').execSync(require('puppeteer').executablePath() + ' --credits', {stdio: 'inherit'})" > THIRD_PARTY_NOTICES
+# Comando para iniciar a aplicação
+CMD ["node", "index.js"]

@@ -11,7 +11,9 @@ app.get("/screenshot", async (req, res) => {
   }
 
   try {
-    const browser = await puppeteer.launch();
+    const browser = await puppeteer.launch({
+      args: ['--no-sandbox', '--disable-setuid-sandbox']
+    });
     const page = await browser.newPage();
     await page.goto(url);
     const screenshot = await page.screenshot({ encoding: "base64" });

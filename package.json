@@ -1,0 +1,15 @@
+{
+  "name": "docker-puppeteer",
+  "version": "1.0.0",
+  "description": "test docker with puppeteer",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.21.2",
+    "puppeteer": "^24.2.1"
+  }
+}
